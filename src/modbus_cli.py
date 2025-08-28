@@ -270,6 +270,14 @@ def add_fuzz_r_subparser(subparsers):
     )
 
 
+def add_scan_subparser(subparsers):
+    parser = subparsers.add_parser(
+        "scan",
+        help="Scan Modbus Device: Automatically discover and read all available registers",
+    )
+    add_device_id_arg(parser)
+
+
 def create_arg_parser():
     parser = argparse.ArgumentParser(
         description="Modbus Client Action Library " + modbus.version.get_version()
@@ -300,6 +308,7 @@ def create_arg_parser():
     add_write_r_subparser(subparsers)
     add_write_multi_r_subparser(subparsers)
     add_mask_write_r_subparser(subparsers)
+    add_scan_subparser(subparsers)
 
     return parser
 
@@ -425,6 +434,28 @@ def do_action(client, args):
         else:
             print(f"{result[0]} successful write operations, {result[1]} errors")
 
+    elif args.action.lower() == "scan":
+        print("[*] Scanning Modbus device")
+        try:
+            result = client.scan_modbus(args.device_id)
+        except Exception as err:
+            print(f"Scan failed: {err}")
+            log.error(err)
+        else:
+            if result:
+                print(f"[*] Scan complete - Found {len(result)} register types for Device {args.device_id}")
+                print()
+
+                for register_type in result:
+                    start_addr = register_type.get('start_address', 0)
+                    print(f"[*] Read {register_type['type']} ({register_type['count']} found, starting at address {start_addr}) [Device: {args.device_id}]")
+                    for data_line in register_type['data'][:20]:
+                        print(f"  {data_line}")
+                    if register_type['count'] > 20:
+                        print(f"  ... and {register_type['count'] - 20} more entries")
+                    print()
+            else:
+                print("No registers found or scan failed")
     else:
         print("Action not defined.")
 
