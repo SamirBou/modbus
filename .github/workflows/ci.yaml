@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -71,10 +75,9 @@ jobs:
           path: payloads/modbus_cli_darwin
           retention-days: 1
 
-  commit:
+  create-pr:
     needs: [build]
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
 
@@ -98,14 +101,19 @@ jobs:
       - name: Commit and push changes
         if: ${{ steps.changes.outputs.changed == 'true' }}
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B ci/update-payloads
           git commit -m "chore: update payloads"
-          git push
+          git push -u origin ci/update-payloads
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Manual trigger fallback
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          echo "commit job ignored for manual trigger."
+      - name: Create PR
+        if: ${{ steps.changes.outputs.changed == 'true' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          base: main
+          branch: ci/update-payloads
+          title: "chore: update payloads"
+          body: "Automated update of payloads."
