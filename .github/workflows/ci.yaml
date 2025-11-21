@@ -79,7 +79,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v5
 
       - name: Download payloads
         uses: actions/download-artifact@v4
@@ -88,25 +88,13 @@ jobs:
           merge-multiple: true
           path: payloads/
 
-      - name: Prepare commit
-        id: commit 
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add payloads/
-          if git diff --cached --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create or update PR
-        if: ${{ steps.commit.outputs.changed == 'true' }}
+      - name: Create PR
         uses: peter-evans/create-pull-request@v6
         with:
           base: main
           branch: ci/update-payloads
-          title: 'chore: update payloads'
+          title: Update payloads
           commit-message: 'chore: update payloads'
           body: Automated update of payloads.
+          add-paths: payloads
           delete-branch: true
