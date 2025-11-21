@@ -88,9 +88,11 @@ jobs:
           merge-multiple: true
           path: payloads/
 
-      - name: Check for changes
-        id: changes
+      - name: Prepare commit
+        id: commit 
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add payloads/
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -98,22 +100,13 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Commit and push changes
-        if: ${{ steps.changes.outputs.changed == 'true' }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B ci/update-payloads
-          git commit -m "chore: update payloads"
-          git push -u origin ci/update-payloads
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create PR
-        if: ${{ steps.changes.outputs.changed == 'true' }}
-        uses: peter-evans/create-pull-request@v7
+      - name: Create or update PR
+        if: ${{ steps.commit.outputs.changed == 'true' }}
+        uses: peter-evans/create-pull-request@v6
         with:
           base: main
           branch: ci/update-payloads
-          title: "chore: update payloads"
-          body: "Automated update of payloads."
+          title: 'chore: update payloads'
+          commit-message: 'chore: update payloads'
+          body: Automated update of payloads.
+          delete-branch: true
