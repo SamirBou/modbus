@@ -131,6 +131,68 @@ def mask_write_register(self, address, and_mask, or_mask, device_id=1):
     return req
 
 
+def _find_highest_address(read_func, start_address, max_per_request, device_id):
+    low = start_address
+    high = min(65535, start_address + max_per_request - 1)
+
+    while low <= high:
+        mid = (low + high) // 2
+        try:
+            result = read_func(mid, count=1, slave=device_id)
+            if result.isError():
+                high = mid - 1
+            else:
+                low = mid + 1
+        except Exception:
+            high = mid - 1
+
+    return high if low > start_address else -1
+
+
+def _read_batch(read_func, start_address, highest_addr, device_id):
+    successful_reads = []
+    addr = start_address
+    while addr <= highest_addr:
+        remaining = highest_addr - addr + 1
+        batch_size = min(remaining, 10)
+        
+        success = False
+        while batch_size > 0 and not success:
+            try:
+                result = read_func(addr, count=batch_size, slave=device_id)
+                if not result.isError():
+                    if hasattr(result, 'bits') and len(result.bits) == batch_size:
+                        for i in range(batch_size):
+                            successful_reads.append((addr + i, result.bits[i]))
+                        success = True
+                    elif hasattr(result, 'registers') and len(result.registers) == batch_size:
+                        for i in range(batch_size):
+                            successful_reads.append((addr + i, result.registers[i]))
+                        success = True
+            except Exception:
+                pass
+            
+            if not success:
+                batch_size = batch_size // 2
+        
+        if not success:
+            for i in range(min(remaining, 10)):
+                try:
+                    result = read_func(addr + i, count=1, slave=device_id)
+                    if not result.isError():
+                        if hasattr(result, 'bits') and result.bits:
+                            successful_reads.append((addr + i, result.bits[0]))
+                        elif hasattr(result, 'registers') and result.registers:
+                            successful_reads.append((addr + i, result.registers[0]))
+                except Exception:
+                    pass
+            addr += min(remaining, 10)
+        else:
+            addr += batch_size
+            
+    return successful_reads
+
+
 @ModbusClient.action
 def scan_modbus(self, device_id=1):
     """
@@ -152,21 +214,7 @@ def scan_modbus(self, device_id=1):
     scan_results = []
 
     for func_code, read_func, max_per_request, name, output_name in func_specs:
-        low = address
-        high = min(65535, address + max_per_request - 1)
-
-        while low <= high:
-            mid = (low + high) // 2
-            try:
-                result = read_func(mid, count=1, slave=device_id)
-                if result.isError():
-                    high = mid - 1
-                else:
-                    low = mid + 1
-            except Exception:
-                high = mid - 1
-
-        highest_addr = high if low > address else -1
+        highest_addr = _find_highest_address(read_func, address, max_per_request, device_id)
 
         if highest_addr >= address:
             count = highest_addr - address + 1
@@ -174,45 +222,7 @@ def scan_modbus(self, device_id=1):
                 f"Read {name} ({func_code:02d}) -- [Address: {address}, Count: {count}, Device ID: {device_id}]"
             )
 
-            successful_reads = []
-            addr = address
-            while addr <= highest_addr:
-                remaining = highest_addr - addr + 1
-                batch_size = min(remaining, 10)
-                
-                success = False
-                while batch_size > 0 and not success:
-                    try:
-                        result = read_func(addr, count=batch_size, slave=device_id)
-                        if not result.isError():
-                            if hasattr(result, 'bits') and len(result.bits) == batch_size:
-                                for i in range(batch_size):
-                                    successful_reads.append((addr + i, result.bits[i]))
-                                success = True
-                            elif hasattr(result, 'registers') and len(result.registers) == batch_size:
-                                for i in range(batch_size):
-                                    successful_reads.append((addr + i, result.registers[i]))
-                                success = True
-                    except Exception:
-                        pass
-                    
-                    if not success:
-                        batch_size = batch_size // 2
-                
-                if not success:
-                    for i in range(min(remaining, 10)):
-                        try:
-                            result = read_func(addr + i, count=1, slave=device_id)
-                            if not result.isError():
-                                if hasattr(result, 'bits') and result.bits:
-                                    successful_reads.append((addr + i, result.bits[0]))
-                                elif hasattr(result, 'registers') and result.registers:
-                                    successful_reads.append((addr + i, result.registers[0]))
-                        except Exception:
-                            pass
-                    addr += min(remaining, 10)
-                else:
-                    addr += batch_size
+            successful_reads = _read_batch(read_func, address, highest_addr, device_id)
 
             if successful_reads:
                 register_data = []
