@@ -9,10 +9,10 @@ download from the Modbus organization at
 [modbus.org](https:www.modbus.org/specs.php) The following table outlines MITRE
 ATT&CK for ICS Tactic coverage provided by the Modbus plugin.
 
-|[Collection](#collection-abilities)| [Impair Process Control](#impair-process-control-abilities) |
-|:-------------------------|:----------------------|
-|Point & Tag Identification| Brute Force I/O |
-|                          | Modify Parameter |
+|[Collection](#collection-abilities)| [Discovery](#discovery-abilities) | [Impair Process Control](#impair-process-control-abilities) |
+|:---|:---|:---|
+|Point & Tag Identification| Remote System Information Discovery | Brute Force I/O |
+|                          |   | Modify Parameter |
 
 
 ### Ability Overview Tables
@@ -27,7 +27,7 @@ heatmap of plugin abilities is available to view [here](assets/heatmap.png).
 |[Modbus - Read Holding Registers](#modbus---read-holding-registers)  |Collection  |Point & Tag Identification  |T0861  |
 |[Modbus - Read Input Registers](#modbus---read-input-registers)  |Collection  |Point & Tag Identification  |T0861  |
 
-#### Discover Abilities
+#### Discovery Abilities
 | Name 	   | Tactic | Technique |  Technique ID   |
 |----------|--------|-----------|-----------------|
 |[Modbus - Read Device Information](#modbus---read-device-information)  |Discovery |Remote System Information Discovery|T0888  |
