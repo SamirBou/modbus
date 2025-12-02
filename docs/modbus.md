@@ -3,7 +3,11 @@
 Modbus Protocol Threat Emulation Tooling
 
 ## Overview
-The Modbus plugin provides adversary emulation abilities specific to the Modbus protocol. The specification for the Modbus protocol is free and available to download from the Modbus organization at [modbus.org](https:www.modbus.org/specs.php) The following table outlines MITRE ATT&CK for ICS Tactic coverage provided by the Modbus plugin.
+The Modbus plugin provides adversary emulation abilities specific to the Modbus
+protocol. The specification for the Modbus protocol is free and available to
+download from the Modbus organization at
+[modbus.org](https:www.modbus.org/specs.php) The following table outlines MITRE
+ATT&CK for ICS Tactic coverage provided by the Modbus plugin.
 
 |[Collection](#collection-abilities)| [Impair Process Control](#impair-process-control-abilities) |
 |:-------------------------|:----------------------|
@@ -12,7 +16,8 @@ The Modbus plugin provides adversary emulation abilities specific to the Modbus 
 
 
 ### Ability Overview Tables
-The following tables list each plugin ability by their corresponding tactic. A heatmap of plugin abilities is available to view [here](assets/heatmap.png).
+The following tables list each plugin ability by their corresponding tactic. A
+heatmap of plugin abilities is available to view [here](assets/heatmap.png).
 
 #### Collection Abilities
 | Name 	   | Tactic | Technique |  Technique ID   |
@@ -21,6 +26,11 @@ The following tables list each plugin ability by their corresponding tactic. A h
 |[Modbus - Read Discrete Inputs](#modbus---read-discrete-inputs)  |Collection  |Point & Tag Identification  |T0861  |
 |[Modbus - Read Holding Registers](#modbus---read-holding-registers)  |Collection  |Point & Tag Identification  |T0861  |
 |[Modbus - Read Input Registers](#modbus---read-input-registers)  |Collection  |Point & Tag Identification  |T0861  |
+
+#### Discover Abilities
+| Name 	   | Tactic | Technique |  Technique ID   |
+|----------|--------|-----------|-----------------|
+|[Modbus - Read Device Information](#modbus---read-device-information)  |Discovery |Remote System Information Discovery|T0888  |
 
 #### Impair Process Control Abilities
 | Name 	                | Tactic 	        | Technique |  Technique ID     |
@@ -38,7 +48,10 @@ This section describes the main components of the plugin and how they interface.
 ### Block Diagram
 ![block diagram](assets/modbus_diagram.jpg)
 
-The Modbus Plugin allows a user to execute several abilities once added to the Caldera instance. The abilities will be executed via the Caldera agent and corresponding payload. This is intended to target devices communicating via the Modbus protocol, likely over port 502.
+The Modbus Plugin allows a user to execute several abilities once added to the
+Caldera instance. The abilities will be executed via the Caldera agent and
+corresponding payload. This is intended to target devices communicating via the
+Modbus protocol, likely over port 502.
 
 ### Payloads
 
@@ -53,9 +66,8 @@ The payloads were compiled in the following environments:
 
 |            | Linux | Windows | Darwin |
 |------------|-------|---------|--------|
-| OS Version | Linux-6.8.0-60-generic-x86_64-with-glibc2.31 | Windows-10-10.0.19043-SP0 | macOS Sequoia v15.6 |
-| Python Version | 3.13.3 | 3.13.3 | 3.13.3 |
-| PyInstaller | 6.13.0 | 6.13.0 | 6.13.0 |
+| OS Version | Ubuntu 22.04 | Windows 2022 | macOS v14 |
+| Python Version | 3.10 | 3.10 | 3.10 |
 
 
 ### Libraries
@@ -294,6 +306,55 @@ __Facts:__
 | `modbus.server.port` | The target device Modbus port | int |  |
 | `modbus.read_input.start` | The starting address to read from | int | 0-65535 |
 | `modbus.read_input.count` | The number of items to read | int  | 1-125 |
+
+__Optional Flags:__
+| Flag | Description | Type | Default |
+|:-----|:------------|:----:|:-------:|
+| `-d`, `--device` | Device ID to be targeted [0-255] | int | 1 |
+
+#### Modbus - Read Device Information
+Modbus Function 43, MEI Type 14 (0x2B, MEI Type 0x0E): Read Device Identification
+
+This function provides a mechanism for tunneling services requests, request
+type 14 is used to read the identification and additional information about
+the remote device.
+
+__Ability Command:__
+<details open>
+<summary>Windows (psh)</summary>
+<br>
+
+```caldera
+.\modbus_cli.exe #{modbus.server.ip} -p #{modbus.server.port} read_device_info --level #{modbus.read_device_info.level}
+```  
+
+</details>
+<details>
+<summary>Linux (sh)</summary>
+<br>
+
+```caldera
+./modbus_cli #{modbus.server.ip} -p #{modbus.server.port} read_device_info --level #{modbus.read_device_info.level}
+```  
+
+</details>
+<details>
+<summary>Darwin (sh)</summary>
+<br>
+
+```caldera
+./modbus_cli_darwin #{modbus.server.ip} -p #{modbus.server.port} read_device_info --level #{modbus.read_device_info.level}
+```  
+
+</details>
+<br>
+
+__Facts:__  
+| Name | Description | Type | Choices |
+|:-----|:------------|:----:|:-------:|
+| `modbus.server.ip` | The target device IP address | string |  |
+| `modbus.server.port` | The target device Modbus port | int |  |
+| `modbus.read_device_info.level` | Level of device information to request | int | 1-3 |
 
 __Optional Flags:__
 | Flag | Description | Type | Default |

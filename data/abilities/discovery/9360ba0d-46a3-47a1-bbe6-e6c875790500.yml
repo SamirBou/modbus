@@ -3,9 +3,11 @@
 - id: 9360ba0d-46a3-47a1-bbe6-e6c875790500
   name: Modbus - Read Device Information
   description: |
-    Modbus Function  (0x2B, subcode 0x0E): Read Device Information
+    Modbus Function 43, MEI Type 14 (0x2B, MEI Type 0x0E): Read Device Identification
 
-    This function code is used to read the device information
+    This function provides a mechanism for tunneling services requests, request
+    type 14 is used to read the identification and additional information about
+    the remote device.
   tactic: discovery
   technique_id: T0888
   technique_name: Remote System Information Discovery
