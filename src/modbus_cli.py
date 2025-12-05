@@ -103,6 +103,15 @@ def add_fuzz_args(parser):
         help="Seconds to wait between write operations [>= 0.0]",
     )
 
+def add_info_args(parser):
+    parser.add_argument(
+        "--level",
+        dest="level",
+        type=to_16bit_uint,
+        required=False,
+        default=3,
+        help="Level of info to request: 1=Basic, 2=Regular, 3=Extended",
+    )
 
 def add_write_c_subparser(subparsers):
     parser = subparsers.add_parser(
@@ -278,6 +287,13 @@ def add_scan_subparser(subparsers):
     add_device_id_arg(parser)
 
 
+def add_read_device_info_subparser(subparsers):
+    parser = subparsers.add_parser(
+        "read_device_info",
+        help="Read device information"
+    )
+    add_info_args(parser)
+    add_device_id_arg(parser)
 def create_arg_parser():
     parser = argparse.ArgumentParser(
         description="Modbus Client Action Library " + modbus.version.get_version()
@@ -309,6 +325,7 @@ def create_arg_parser():
     add_write_multi_r_subparser(subparsers)
     add_mask_write_r_subparser(subparsers)
     add_scan_subparser(subparsers)
+    add_read_device_info_subparser(subparsers)
 
     return parser
 
@@ -433,6 +450,18 @@ def do_action(client, args):
             log.error(err)
         else:
             print(f"{result[0]} successful write operations, {result[1]} errors")
+    elif args.action.lower() == "read_device_info":
+        print("[*] Read Device Information")
+        try:
+            result = client.read_device_info(
+                args.level,
+                args.device_id
+            )
+        except ValueError as err:
+            print(f"Device Info Read failed: {err}")
+            log.error(err)
+        else:
+            print_info_result(result)
 
     elif args.action.lower() == "scan":
         print("[*] Scanning Modbus device")
@@ -459,6 +488,8 @@ def do_action(client, args):
     else:
         print("Action not defined.")
 
+def print_info_result(result):
+    print(result.information)
 
 def print_read_result(result, start, count, datatype):
     binary_types = ["coil", "discrete input"]
