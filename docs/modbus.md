@@ -11,8 +11,8 @@ ATT&CK for ICS Tactic coverage provided by the Modbus plugin.
 
 |[Collection](#collection-abilities)| [Discovery](#discovery-abilities) | [Impair Process Control](#impair-process-control-abilities) |
 |:---|:---|:---|
-|Point & Tag Identification| Remote System Information Discovery | Brute Force I/O |
-|                          |   | Modify Parameter |
+|Point & Tag Identification | Remote System Information Discovery | Brute Force I/O  |
+|Automated Collection       |                                     | Modify Parameter |
 
 
 ### Ability Overview Tables
@@ -26,6 +26,7 @@ heatmap of plugin abilities is available to view [here](assets/heatmap.png).
 |[Modbus - Read Discrete Inputs](#modbus---read-discrete-inputs)  |Collection  |Point & Tag Identification  |T0861  |
 |[Modbus - Read Holding Registers](#modbus---read-holding-registers)  |Collection  |Point & Tag Identification  |T0861  |
 |[Modbus - Read Input Registers](#modbus---read-input-registers)  |Collection  |Point & Tag Identification  |T0861  |
+|[Modbus - Scan Device](#modbus---scan-device)  |Collection  |Automated Collection |T0802 |
 
 #### Discovery Abilities
 | Name 	   | Tactic | Technique |  Technique ID   |
@@ -311,6 +312,56 @@ __Optional Flags:__
 | Flag | Description | Type | Default |
 |:-----|:------------|:----:|:-------:|
 | `-d`, `--device` | Device ID to be targeted [0-255] | int | 1 |
+
+#### Modbus - Scan Device
+This ability runs a sequence of Modbus read functions to automatically
+discover and read all available Modbus data (coils and registers) on a device
+starting from a specified address. 
+
+The included parser generates clean, non-redundant facts for each register type
+(count and start_address) for use with other Modbus abilities.
+
+__Ability Command:__
+<details open>
+<summary>Windows (psh)</summary>
+<br>
+
+```caldera
+.\modbus_cli.exe #{modbus.server.ip} -p #{modbus.server.port} scan
+```  
+
+</details>
+<details>
+<summary>Linux (sh)</summary>
+<br>
+
+```caldera
+./modbus_cli #{modbus.server.ip} -p #{modbus.server.port} scan
+```  
+
+</details>
+<details>
+<summary>Darwin (sh)</summary>
+<br>
+
+```caldera
+./modbus_cli_darwin #{modbus.server.ip} -p #{modbus.server.port} scan
+```  
+
+</details>
+<br>
+
+__Facts:__  
+| Name | Description | Type | Choices |
+|:-----|:------------|:----:|:-------:|
+| `modbus.server.ip` | The target device IP address | string |  |
+| `modbus.server.port` | The target device Modbus port | int |  |
+
+__Optional Flags:__
+| Flag | Description | Type | Default |
+|:-----|:------------|:----:|:-------:|
+| `-d`, `--device` | Device ID to be targeted [0-255] | int | 1 |
+
 
 #### Modbus - Read Device Information
 Modbus Function 43, MEI Type 14 (0x2B, MEI Type 0x0E): Read Device Identification

@@ -3,19 +3,12 @@
 - id: 7f43fa44-c2aa-4bb6-ba4b-2c1e58df3b51
   name: Modbus - Scan Device
   description: |
-    Modbus Device Scan
+    Procedure
 
-    This function automatically discovers and reads all available Modbus registers on a device
-    starting from a specified address. It scans through all four main function code types
-    (Coils, Discrete Inputs, Holding Registers, Input Registers) to identify valid addresses
-    and read their current values. This provides a comprehensive view of the device's register
-    space for reconnaissance purposes.
-
-    The parser generates clean, non-redundant facts for each register type (count and start_address)
-    without hardcoded device numbers or duplicate information.
+    Automatically discover and read all available Modbus data on a device.
   tactic: collection
-  technique_id: T0861
-  technique_name: Point & Tag Identification
+  technique_id: T0802
+  technique_name: Automated Collection
   executors:
   - platform: linux
     name: sh
